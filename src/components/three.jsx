@@ -1,7 +1,7 @@
 import React from 'react'
 
 import * as THREE from 'three'
-import { scene, camera, controls, renderer, loader, textures, pointLight, spotLight, arts } from './three_init.js'
+import { scene, camera, controls, renderer, loader, textures, arts, logo } from './three_init.js'
 import { socket } from '../utils/socket.js'
 //import QRCode from 'qrcode.react'
 
@@ -51,11 +51,6 @@ class Three extends React.Component {
     });
     scene.add( controls.getObject() );
 
-    socket.on('light', light => {
-      spotLight.intensity = light.spot;
-      pointLight.intensity = light.env;
-    });
-
     //append renderer
     this.wrapper.current.appendChild( renderer.domElement );
     //
@@ -101,46 +96,11 @@ class Three extends React.Component {
         }
       }
 
-
-
-          //control for brendan
-          if(this.props.name == '16'){
-
-              switch(e.keyCode) {
-                case 49:
-                  //spot up
-                  if(this.spot < 1) {
-                    this.spot += .1
-                    socket.emit('light', {spot:this.spot,env:this.env})
-                  }
-                  break;
-                case 50:
-                  //spot down
-                  if(this.spot >= .1) {
-                    this.spot -= .1
-                    socket.emit('light', {spot:this.spot,env:this.env})
-                  }
-                  break;
-                case 51:
-                  //env up
-                  if(this.env < 1) {
-                    this.env += .1
-                    socket.emit('light', {spot:this.spot,env:this.env})
-                  }
-                  break;
-                case 52:
-                  //env down
-                  if(this.env >= .1) {
-                    this.env -= .1
-                    socket.emit('light', {spot:this.spot,env:this.env})
-                  }
-                  break;
-              }
-          }
     })
 
 
-
+    socket.on('exist', data => this.existUser(data))
+    socket.on('newuser', data => this.newUser(data))
 
     loader.load( testmodel, gltf => {
 
@@ -193,7 +153,6 @@ class Three extends React.Component {
           this.me.wt.prepare = 0
           this.me.wt.shake = 0
 
-
           this.start()
 
         });
@@ -204,7 +163,6 @@ class Three extends React.Component {
   start() {
 
     //socket commu
-    socket.emit('onboard', {name:this.props.name,realname:this.props.realname,gender:this.props.gender});
     socket.on('render', data => this.renderWorld(data))
     socket.on('kill', id => {
       if(this.users[id]) {
@@ -227,8 +185,6 @@ class Three extends React.Component {
         delete this.users[id]
       }
     })
-    socket.on('existuser', data => this.existUser(data))
-    socket.on('newuser', data => this.newUser(data))
 
 
     setInterval(() => {
@@ -304,8 +260,11 @@ class Three extends React.Component {
   			controls.moveForward( camera.direction.z * .1 );
       }
 
-      camera.position.x = Math.max(Math.min(camera.position.x,48),-48)
-      camera.position.z = Math.max(Math.min(camera.position.z,48),-48)
+      camera.position.x = Math.max(Math.min(camera.position.x, 180),-180)
+      camera.position.z = Math.max(Math.min(camera.position.z, 180),-180)
+
+
+      logo.rotation.z += .001
 
       if( this.me ) {
         this.me.position.x = camera.position.x
@@ -321,7 +280,6 @@ class Three extends React.Component {
 
       arts.forEach(art => {
         let pos = art.pos
-        art.position.y = 0
 
       })
 
@@ -435,11 +393,9 @@ class Three extends React.Component {
   //add users on login
   existUser(users) {
     Object.keys(users).forEach(id => {
-      if(id === socket.id) {
-        return
-      }
+      if(id === socket.id) return
 
-      this.newFigure(id,users[id].name, users[id].realname)
+      this.newFigure(id,users[id].role, users[id].realname)
 
     })
   }
@@ -451,7 +407,7 @@ class Three extends React.Component {
       return
     }
 
-    this.newFigure(data.id, data.name, data.realname)
+    this.newFigure(data.id, data.role, data.realname)
 
   }
 
@@ -465,7 +421,7 @@ class Three extends React.Component {
     controls.lock();
   }
 
-  newFigure(id,name, realname) {
+  newFigure(id,role, realname) {
     loader.load( testmodel, gltf => {
 
           var model = gltf.scene;
@@ -473,9 +429,7 @@ class Three extends React.Component {
           model.position.y = -10
           model.eulerOrder = 'YXZ';
 
-          console.log(name)
-          console.log(textures['head0'])
-          model.children[0].children[0].children[0].material.map = textures['head'+name]
+          model.children[0].children[0].children[0].material.map = textures['head'+role]
 
           model.children[2].traverse( o => {
             if (o.frustumCulled) {

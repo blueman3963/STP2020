@@ -7,18 +7,16 @@ import { GLTFLoader } from '../utils/GLTFLoader.js'
 
 //setup scene
     var scene = new THREE.Scene();
-    var fogColor = new THREE.Color(0xffddff);
+    var fogColor = new THREE.Color(0xffdd15);
     scene.background = fogColor;
     scene.fog = new THREE.Fog(fogColor, 0.0025, 300);
-
-
 
 
 //setup camera
     var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
     camera.position.y = -5
-    camera.position.z = Math.random()*20-20
-    camera.position.x = Math.random()*20-20
+    camera.position.z = Math.random()*10-60
+    camera.position.x = Math.random()*10
 
 
 //setup renderer
@@ -29,7 +27,7 @@ import { GLTFLoader } from '../utils/GLTFLoader.js'
 
 
 //setup light
-    var pointLight = new THREE.PointLight( 0xdddd99, .5, 200 );
+    var pointLight = new THREE.PointLight( 0xdddd99, 1, 200 );
     pointLight.position.set( 0, 50, 0 );
     pointLight.shadow.bias = - 0.005; // reduces self-shadowing on double-sided objects
     pointLight.castShadow = true;
@@ -67,7 +65,7 @@ import { GLTFLoader } from '../utils/GLTFLoader.js'
 					specular: 0x333311,
           map: floorTex
 				})
-    var ground = new THREE.Mesh( new THREE.CircleGeometry( 80, 32 ), material );
+    var ground = new THREE.Mesh( new THREE.PlaneGeometry( 160, 160 ), material );
     ground.rotation.x = -Math.PI/2
     ground.position.y = -10
     ground.receiveShadow = true;
@@ -76,47 +74,69 @@ import { GLTFLoader } from '../utils/GLTFLoader.js'
 
 //walls
     var baseMaterial = new THREE.MeshPhongMaterial({
-					color: 0xa0adaf,
-					shininess: 10,
-					specular: 0x111111,
-					side: THREE.DoubleSide,
-				});
-
-    var geometry = new THREE.CylinderGeometry( 80, 80, 20, 32, 1, true );
+        color: 0xa0adaf,
+        shininess: 10,
+        specular: 0x111111,
+        side: THREE.DoubleSide,
+      });
+    for(let i = 0; i < 4; i++) {
+    var geometry = new THREE.PlaneBufferGeometry( 200, 200 );
     let wall = new THREE.Mesh( geometry, baseMaterial );
-    wall.position.y = -10
-		wall.receiveShadow = true;
+    wall.position.y = 90
+    wall.receiveShadow = true;
+    switch(i) {
+      case 0:
+        wall.rotation.y = Math.PI/2
+        wall.position.x = 80
+        break;
+      case 1:
+        wall.rotation.y = Math.PI/2
+        wall.position.x = -80
+        break;
+      case 2:
+        wall.position.z = 80
+        break;
+      case 3:
+        wall.position.z = -80
+        break;
+      default:
+        break;
+    }
     scene.add( wall );
+    }
 
 
 
 
-    /*
-    var canvas = document.createElement('canvas');
-    canvas.width = 10000;
-    canvas.height = 20000;
-    var ctx = canvas.getContext("2d");
-    socket.on('draw', sigs => {
-      sigs.forEach(sig => {
-        var idata = ctx.createImageData(sig.width, sig.height);
-        for(var i = 0; i < idata.data.length; i++) idata.data[i] = sig.image[i];
+//board
 
-        ctx.putImageData(idata, 0, 19000);
-        let sigsTex = new THREE.CanvasTexture(ctx.canvas);
-        var baseMaterial = new THREE.MeshPhongMaterial({
-    					color: 0xa0adaf,
-    					shininess: 10,
-    					specular: 0x111111,
-    					side: THREE.DoubleSide,
-              map: sigsTex
-    				});
-            board.material = baseMaterial
+    var logoG = new THREE.PlaneBufferGeometry( 150, 50 );
+    let logoimg = require('../assets/tex/logo.png')
+    let logoTe = floorLoader.load( logoimg, function ( tex ) {})
+    var logoMa = new THREE.MeshBasicMaterial({
+          map:logoTe,
+          transparent: true
+        });
+    let logo = new THREE.Mesh( logoG, logoMa );
+    logo.rotation.x = Math.PI/2
+    logo.position.y = 180
+    scene.add( logo );
 
-
-      })
-    })
-    */
-
+    var boardG = new THREE.PlaneBufferGeometry( 17, 2 );
+    let boardimg = require('../assets/tex/title.png')
+    let boardTe = floorLoader.load( boardimg, function ( tex ) {})
+    var boardMa = new THREE.MeshPhongMaterial({
+          color: 0xa0adaf,
+          shininess: 10,
+          specular: 0x111111,
+          side: THREE.DoubleSide,
+          map:boardTe,
+          transparent: true,
+        });
+    let board = new THREE.Mesh( boardG, boardMa );
+    board.position.z = -75
+    board.position.y = -5
+    scene.add( board );
 
 
 //setup controls
@@ -187,17 +207,12 @@ import { GLTFLoader } from '../utils/GLTFLoader.js'
     }
 
 
-
-
-
 //load artworks
     var texloader = new THREE.TextureLoader();
     var arts = []
-    for(let i=0; i<1; i++) {
-      let img = new Image()
-      img.src = 'https://drive.google.com/uc?id=1IRuBj93VWC3-oLxm-O-JGA-raoGrWRgO'
-      document.querySelector('body').appendChild(img)
-      var texture = texloader.load( 'https://drive.google.com/uc?id=1IRuBj93VWC3-oLxm-O-JGA-raoGrWRgO', function ( tex ) {
+    for(let i=0; i<40; i++) {
+      let img = require('../assets/tex/test.png')
+      var texture = texloader.load( 'https://cdn.shopify.com/s/files/1/0279/4287/9332/files/640x360-2.png', function ( tex ) {
 
         let workMat = new THREE.MeshBasicMaterial({
               color: 0xffffff,
@@ -206,10 +221,15 @@ import { GLTFLoader } from '../utils/GLTFLoader.js'
             })
 
 
-        let art = new THREE.Mesh( new THREE.PlaneBufferGeometry( tex.image.width/100, tex.image.height/100 ), workMat );
+        let artwork = new THREE.Mesh( new THREE.PlaneBufferGeometry( tex.image.width/100, tex.image.height/100 ), workMat );
+        let art = new THREE.Group();
+        art.add(artwork)
+        artwork.position.z = -70
         scene.add( art );
         arts.push(art);
         art.pos = i
+        art.position.y = -5
+        art.rotation.y = i*.14 + .45
       });
 
     }
@@ -219,4 +239,4 @@ import { GLTFLoader } from '../utils/GLTFLoader.js'
 
 
 
-export { scene, camera, renderer, controls, loader, textures, spotLight, pointLight, arts }
+export { scene, camera, renderer, controls, loader, textures, arts, logo }
