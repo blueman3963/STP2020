@@ -10,7 +10,9 @@ class App extends React.Component {
     this.state = {
       init: false,
       role: '0',
-      queue: 0
+      queue: 0,
+      first: 'John',
+      last: 'Doe'
     }
     this.title = React.createRef()
   }
@@ -18,7 +20,7 @@ class App extends React.Component {
   componentDidMount() {
     socket.on('ready', () => {
       this.setState({init:true}, () => {
-        socket.emit('onboard', {role:this.state.role,realname:this.state.realname,email: this.state.email});
+        socket.emit('onboard', {role:this.state.role,first:this.state.first,last:this.state.last,email: this.state.email});
       })
     })
 
@@ -26,7 +28,7 @@ class App extends React.Component {
   }
 
   getIn() {
-    this.setState({role:'0', realname:'john doe', gender:'generic'},() => {
+    this.setState({role:'0', first:'John', last:'doe', gender:'generic'},() => {
       this.setState({onboard:true})
     })
   }
@@ -74,12 +76,13 @@ class App extends React.Component {
             }
 
             .input {
-              display: block;
+              display: inline-block;
               margin: auto;
-              font-size: 50px;
+              font-size: 30px;
               text-align: center;
               border: 1px solid #000;
               margin-bottom: 20px;
+              width: 200px;
             }
 
             .input:focus {
@@ -106,15 +109,20 @@ class App extends React.Component {
         `}</style>
         {
           this.state.init
-          ? <Three role={this.state.role} realname={this.state.realname}/>
+          ? <Three role={this.state.role} first={this.state.first} last={this.state.last}/>
           : this.state.queue
           ? <div>The Gallery is full, you are number {this.state.queue} in the line</div>
           : this.state.onboard
           ? <div className='step2'>
             <div>
               <div>
-              <input className='input' placeholder='name' onChange={e => this.setState({realname: e.target.value})}/>
-              <input className='input' placeholder='email' onChange={e => this.setState({email: e.target.value})}/>
+              <div>
+                <input className='input' style={{marginRight: '20px'}} placeholder='first name' onChange={e => this.setState({first: e.target.value})}/>
+                <input className='input' placeholder='last name' onChange={e => this.setState({last: e.target.value})}/>
+              </div>
+              <div>
+                <input className='input' style={{width: '420px'}} placeholder='email' onChange={e => this.setState({email: e.target.value})}/>
+              </div>
               </div>
               <div className='btn' onClick={() => this.init()}>start</div>
             </div>

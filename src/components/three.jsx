@@ -1,40 +1,40 @@
 import React from 'react'
 
 import * as THREE from 'three'
-import { scene, camera, controls, renderer, loader, textures, arts, logo } from './three_init.js'
+import { scene, camera, controls, renderer, loader, textures, arts, logo, roundTimeEach, artstart, artloader } from './three_init.js'
 import { socket } from '../utils/socket.js'
 //import QRCode from 'qrcode.react'
 
 import * as testmodel from '../assets/test.glb'
 import * as tips from '../assets/tips.png'
-import * as yea from '../assets/yea.wav'
 import * as clap from '../assets/clap.wav'
 
+import * as assets from '../assets/assets.json'
 
 class Three extends React.Component {
   constructor(props) {
     super(props)
 
     this.state = {
-      init:false,
-      data: ""
+      lock: false,
+      messaging: false,
+      chat: []
     }
 
     this.wrapper = React.createRef()
     this.helper = React.createRef()
     this.menu = React.createRef()
     this.quit = React.createRef()
+    this.messageBox = React.createRef()
     this.users = {}
     this.model = null
     this.clock = new THREE.Clock();
 
-    this.yea = new Audio(yea)
     this.clap = new Audio(clap)
-    this.channels = []
 
-    this.spot = .5
-    this.env = .5
-    this.stop = null
+    this.message = ''
+
+    this.artcount = 0
   }
 
   componentDidMount() {
@@ -42,12 +42,15 @@ class Three extends React.Component {
     controls.addEventListener( 'lock', () => {
     	this.menu.current.style.display = 'none';
       this.quit.current.style.display = 'block';
+      this.setState({lock: true})
     });
     window.addEventListener( 'resize', () => this.onWindowResize(), false );
 
     controls.addEventListener( 'unlock', () => {
     	this.menu.current.style.display = 'flex';
       this.quit.current.style.display = 'none';
+      this.setState({messaging:false})
+      this.setState({lock: false})
     });
     scene.add( controls.getObject() );
 
@@ -57,32 +60,24 @@ class Three extends React.Component {
 
     //control
     window.addEventListener('keydown', e => {
-      if(e.keyCode == 32){
-        if(!this.me.cheering && !this.me.claping){
-          this.me.cheering = true
-
-          //audio
-          this.yea.volume = .3
-          this.yea.play()
-
-          clearTimeout(this.stop)
-          confetti.start()
-          this.stop = setTimeout(() => confetti.stop(),1000)
-
-
-          this.me.prepare = false
-          setTimeout(() => {
-            this.me.cheering = false
-          },3000)
-        }
-      } else if(e.keyCode == 70) {
-          if(!this.me.prepare && !this.me.cheering){
-            this.me.prepare = true
-          } else {
-            this.me.prepare = false
+      if(e.keyCode == 9 && this.state.lock){
+        //trigger msg
+        e.preventDefault()
+        let msg = this.state.messaging
+        this.setState({messaging:!msg}, () => {
+          if(!msg) {
+            this.message = ''
+            this.messageBox.current.focus()
           }
-      } else if(e.keyCode == 67) {
-        if(!this.me.cheering && !this.me.claping){
+        })
+      } else if(e.keyCode == 70 && !this.state.messaging) {
+        if(!this.me.prepare){
+          this.me.prepare = true
+        } else {
+          this.me.prepare = false
+        }
+      } else if(e.keyCode == 67 && !this.state.messaging) {
+        if(!this.me.claping){
           this.me.claping = true
 
           //audio
@@ -101,6 +96,8 @@ class Three extends React.Component {
 
     socket.on('exist', data => this.existUser(data))
     socket.on('newuser', data => this.newUser(data))
+    socket.on('chathistory', data => this.setState({chat:data}))
+
 
     loader.load( testmodel, gltf => {
 
@@ -121,14 +118,11 @@ class Three extends React.Component {
           });
 
           //right arm
-          //model.children[2].children[1].rotation.x = Math.PI/8
 
           this.me = model;
           this.me.walking = false
-          this.me.cheering = false
           this.me.claping = false
           this.me.prepare = false
-          this.me.shaking = false
           scene.add( model );
 
           //animation
@@ -137,10 +131,8 @@ class Three extends React.Component {
           let animations = gltf.animations
           let actions = {}
           actions.idle = mixer.clipAction( animations[ 0 ] );
-          actions.cheer = mixer.clipAction( animations[ 2 ] );
           actions.clap = mixer.clipAction( animations[ 3 ] );
           actions.prepare = mixer.clipAction( animations[ 5 ] );
-          actions.shake = mixer.clipAction( animations[ 6 ] );
 
           Object.keys(actions).forEach(key => {
             actions[key].play()
@@ -148,10 +140,8 @@ class Three extends React.Component {
           })
           this.me.actions = actions
           this.me.wt = {}
-          this.me.wt.cheer = 0
           this.me.wt.clap = 0
           this.me.wt.prepare = 0
-          this.me.wt.shake = 0
 
           this.start()
 
@@ -204,21 +194,10 @@ class Three extends React.Component {
           y: camera.eulerData.y
         },
         walking: this.me.walking,
-        cheering: this.me.cheering,
         claping: this.me.claping,
         prepare: this.me.prepare,
-        shaking: this.me.shaking
       }
       socket.emit('move', data);
-
-      //me animation
-      if(this.me.cheering && this.me.wt.cheer < 1) {
-        this.me.wt.cheer += .1
-        this.me.actions.cheer.setEffectiveWeight( this.me.wt.cheer )
-      } else if(!this.me.cheering && this.me.wt.cheer > 0) {
-        this.me.wt.cheer -= .1
-        this.me.actions.cheer.setEffectiveWeight( this.me.wt.cheer )
-      }
 
       if(this.me.claping && this.me.wt.clap < 1) {
         this.me.wt.clap += .1
@@ -236,15 +215,80 @@ class Three extends React.Component {
         this.me.actions.prepare.setEffectiveWeight( this.me.wt.prepare )
       }
 
-      if(this.me.shaking && this.me.wt.shake < 1) {
-        this.me.wt.shake += .1
-        this.me.actions.shake.setEffectiveWeight( this.me.wt.shake )
-      } else if(!this.me.shaking && this.me.wt.shake > 0) {
-        this.me.wt.shake -= .1
-        this.me.actions.shake.setEffectiveWeight( this.me.wt.shake )
-      }
     },20)
 
+    //display message
+    socket.on('message', data => {
+      Object.keys(this.users).forEach(key => {
+        if(key === data.id) {
+          //clean
+          if(this.users[key].msg) {
+            this.users[key].msg.traverse( o => {
+              if (o.geometry) {
+                  o.geometry.dispose()
+              }
+              if (o.material) {
+                  o.material.dispose()
+              }
+              if (o.texture) {
+                  o.texture.dispose()
+              }
+            });
+          }
+          this.users[key].clear = null
+          this.users[key].talking.remove(this.users[key].msg)
+          this.users[key].msg = null
+          clearTimeout(this.users[key].clear)
+          //show msg
+          let test = document.createElement('canvas');
+          let testc = test.getContext('2d');
+
+          let words = data.msg.split(' ');
+          let lines = [];
+          let currentLine = words[0];
+
+          let width
+          for (let i = 1; i < words.length; i++) {
+              let word = words[i];
+              let width = testc.measureText(currentLine + " " + word).width;
+              if (width < 70) {
+                  currentLine += " " + word;
+              } else {
+                  lines.push(currentLine);
+                  currentLine = word;
+              }
+          }
+          lines.push(currentLine);
+
+          let bitmap = document.createElement('canvas');
+          let w = 3800, h = lines.length*440+800
+          bitmap.width = w;
+          bitmap.height = h;
+
+          let g = bitmap.getContext('2d');
+          g.font = 'bold 400px Arial';
+          g.fillStyle = 'white';
+          g.textAlign = "left";
+          for (let i = 0; i < lines.length; i++) g.fillText(lines[i], 400, 840 + (i*440) );
+
+          // canvas contents will be used for a texture
+          var texture = new THREE.Texture(bitmap)
+          texture.needsUpdate = true;
+          var geometry = new THREE.PlaneGeometry( 2, 2*h/w, 2 );
+          var material = new THREE.MeshBasicMaterial( {map : texture} );
+          var plane = new THREE.Mesh( geometry, material );
+          plane.position.x = 3
+          plane.position.y = 5
+          this.users[key].talking.add(plane)
+          this.users[key].msg = plane
+          this.users[key].clear = setTimeout(() => {
+            this.users[key].talking.remove(plane)
+            this.users[key].msg = null
+          }, 10000)
+
+        }
+      })
+    })
 
     // start
     var animate = () => {
@@ -255,13 +299,13 @@ class Three extends React.Component {
 			camera.direction.x = Number( camera.moveRight ) - Number( camera.moveLeft );
 			camera.direction.normalize();
 
-      if(this.menu.current.style.display === 'none'){
+      if(this.menu.current.style.display === 'none' && !this.state.messaging){
   			controls.moveRight( camera.direction.x * .1 );
   			controls.moveForward( camera.direction.z * .1 );
       }
 
-      camera.position.x = Math.max(Math.min(camera.position.x, 180),-180)
-      camera.position.z = Math.max(Math.min(camera.position.z, 180),-180)
+      camera.position.x = Math.max(Math.min(camera.position.x, 79),-79)
+      camera.position.z = Math.max(Math.min(camera.position.z, 79),-79)
 
 
       logo.rotation.z += .001
@@ -271,27 +315,56 @@ class Three extends React.Component {
         this.me.position.z = camera.position.z
         this.me.position.y = camera.position.y - 5
         this.me.rotation.y = camera.eulerData.y
-        if(camera.direction.z || camera.direction.x) {
+        if((camera.direction.z || camera.direction.x)&&!this.state.messaging) {
           this.me.walking = true
         } else {
           this.me.walking = false
         }
       }
 
-      arts.forEach(art => {
-        let pos = art.pos
-
-      })
-
-
 
       //mixer
-      var mixerUpdateDelta = this.clock.getDelta();
+      var Delta = this.clock.getDelta();
+
+      //slideshow
+      arts.forEach(art => {
+        art.rotation.y += Delta*(Math.PI*2-.8)/roundTimeEach
+        if(art.rotation.y > (Math.PI*2-.4)) {
+          scene.remove( art );
+          arts.pop()
+          this.artcount ++
+          if(this.artcount+40+artstart > assets.default.length-1) {
+            this.artcount = - 40 - artstart
+          }
+          //new art
+          let texture = artloader.load( assets.default[this.artcount+40+artstart].link, ( tex ) => {
+
+            let workMat = new THREE.MeshBasicMaterial({
+                  color: 0xffffff,
+                  map: tex,
+                  side: THREE.DoubleSide
+                })
+
+
+            let artwork = new THREE.Mesh( new THREE.PlaneBufferGeometry( tex.image.width/100, tex.image.height/100 ), workMat );
+            let newart = new THREE.Group();
+            newart.add(artwork)
+            artwork.position.z = -70
+            scene.add( newart );
+            arts.unshift(newart);
+            newart.position.y = -5
+            newart.rotation.y = .4
+          });
+
+
+        }
+      })
+
       Object.keys(this.users).forEach(key => {
         let user = this.users[key]
-        user.mixer.update( mixerUpdateDelta );
+        user.mixer.update( Delta );
       })
-      this.me.mixer.update( mixerUpdateDelta );
+      this.me.mixer.update( Delta );
 
       renderer.render( scene, camera );
     };
@@ -303,7 +376,6 @@ class Three extends React.Component {
 
   //render other users
   renderWorld(users) {
-    let shaking = false
     Object.keys(users).forEach(id => {
       if(socket.id !== id) {
         if(users[id].data.pos && this.users[id]){
@@ -312,19 +384,9 @@ class Three extends React.Component {
           model.position.z = users[id].data.pos.z
           model.position.y = users[id].data.pos.y-5
           model.rotation.y = users[id].data.head.y
-          model.plane.rotation.y = camera.eulerData.y - users[id].data.head.y
+          model.name.rotation.y = camera.eulerData.y - users[id].data.head.y
+          model.talking.rotation.y = camera.eulerData.y - users[id].data.head.y
 
-          if(
-            Math.abs(camera.position.z-users[id].data.aiming.z) < .6
-            &&
-            Math.abs(camera.position.x-users[id].data.aiming.x) < .6
-          ) {
-            let angle = Math.abs(camera.eulerData.y-users[id].data.head.y)
-            if( angle > Math.PI ) angle = 2*Math.PI-angle
-            if(angle > 3 && users[id].data.prepare){
-              shaking = true
-            }
-          }
 
           //walking animation
           if(users[id].data.walking && model.wt.walk < 1) {
@@ -333,21 +395,6 @@ class Three extends React.Component {
           } else if(!users[id].data.walking && model.wt.walk > 0) {
             model.wt.walk -= .1
             model.actions.walk.setEffectiveWeight( model.wt.walk )
-          }
-          //chear animation
-          if(users[id].data.cheering && model.wt.cheer < 1) {
-            model.wt.cheer += .1
-            model.actions.cheer.setEffectiveWeight( model.wt.cheer )
-            if(model.yea.paused) {
-              model.yea.play()
-              clearTimeout(this.stop)
-              confetti.start()
-              this.stop = setTimeout(() => confetti.stop(),1000)
-            }
-
-          } else if(!users[id].data.cheering && model.wt.cheer > 0) {
-            model.wt.cheer -= .1
-            model.actions.cheer.setEffectiveWeight( model.wt.cheer )
           }
           //clap animation
           if(users[id].data.claping && model.wt.clap < 1) {
@@ -369,25 +416,13 @@ class Three extends React.Component {
             model.wt.prepare -= .1
             model.actions.prepare.setEffectiveWeight( model.wt.prepare )
           }
-          //shaking animation
-          if(users[id].data.shaking && model.wt.shake < 1) {
-            model.wt.shake += .1
-            model.actions.shake.setEffectiveWeight( model.wt.shake )
-          } else if(!users[id].data.shaking && model.wt.shake > 0) {
-            model.wt.shake -= .1
-            model.actions.shake.setEffectiveWeight( model.wt.shake )
-          }
+
 
           model.children[0].rotation.x = users[id].data.head.x
 
         }
       }
     })
-    if(this.me.prepare) {
-      this.me.shaking = shaking
-    } else {
-      this.me.shaking = false
-    }
   }
 
   //add users on login
@@ -453,15 +488,17 @@ class Three extends React.Component {
           texture.needsUpdate = true;
           var geometry = new THREE.PlaneGeometry( 2, .5, 2 );
           var material = new THREE.MeshBasicMaterial( {map : texture} );
-          var plane = new THREE.Mesh( geometry, material );
-          plane.position.y = 7
-          model.plane = plane
-          model.add( plane );
+          var name = new THREE.Mesh( geometry, material );
+          name.position.y = 7
+          model.name = name
+          model.add( name );
+
+          //talking
+          var talking = new THREE.Group();
+          model.talking = talking
+          model.add( talking );
 
           //audio
-          let yea = this.yea.cloneNode()
-          yea.volume = .1
-          model.yea = yea
           let clap = this.clap.cloneNode()
           clap.volume = .1
           model.clap = clap
@@ -486,10 +523,8 @@ class Three extends React.Component {
                     let actions = {}
                     actions.idle = mixer.clipAction( animations[ 0 ] );
           					actions.walk = mixer.clipAction( animations[ 1 ] );
-                    actions.cheer = mixer.clipAction( animations[ 2 ] );
                     actions.clap = mixer.clipAction( animations[ 3 ] );
                     actions.prepare = mixer.clipAction( animations[ 5 ] );
-                    actions.shake = mixer.clipAction( animations[ 6 ] );
                     Object.keys(actions).forEach(key => {
                       actions[key].play()
                       actions[key].setEffectiveWeight( 0 )
@@ -497,15 +532,19 @@ class Three extends React.Component {
                     this.users[id].actions = actions
                     this.users[id].walking = false
                     this.users[id].prepare = false
-                    this.users[id].shaking = false
                     this.users[id].wt = {}
                     this.users[id].wt.walk = 0
-                    this.users[id].wt.cheer = 0
                     this.users[id].wt.clap = 0
                     this.users[id].wt.prepare = 0
-                    this.users[id].wt.shake = 0
 
         } );
+  }
+
+  sendMessage(e) {
+    if(e.keyCode == 13 && this.message !== '') {
+      socket.emit('message', this.message)
+      this.setState({messaging:false})
+    }
   }
 
   render() {
@@ -573,9 +612,55 @@ class Three extends React.Component {
               right: 0;
               z-index: 9999;
             }
+
+            .message {
+
+            }
+
+            .message input {
+              position: fixed;
+              left: 50vw;
+              bottom: 50px;
+              transform: translateX(-50%);
+              width: 600px;
+              border-radius: 25px;
+              font-size: 24px;
+              height: 50px;
+              padding: 0 10px;
+              border: none;
+            }
+
+            .message input:focus {
+              outline: none;
+            }
+
+            .send {
+              position: fixed;
+              left: calc(50vw + 300px);
+              bottom: 65px;
+              transform: translateX(-100%);
+            }
+
+            .history {
+              position: fixed;
+              bottom: 100px;
+              left: 50vw;
+              transform: translateX(-50%);
+            }
+
+            .historychat {
+              width: 600px;
+              display: block;
+              background-color: #000;
+              color: #fff;
+              font-size: 20px;
+              border-radius: 30px;
+              padding: 10px;
+              margin-bottom: 20px;
+            }
         `}</style>
         <div className='helper' ref={this.helper}>
-          your are <strong>{this.props.realname}</strong>
+          your are <strong>{this.props.first+' '+this.props.last}</strong>
         </div>
         <div className='menu' ref={this.menu}>
           <img src={tips} />
@@ -583,194 +668,25 @@ class Three extends React.Component {
         <div className='quit' ref={this.quit}>
           press <span>esc</span> to unlock your cursor
         </div>
+        {
+          this.state.messaging
+          ?<div className='message'>
+            <div className='history'>
+              {
+                this.state.chat.map(c => {
+                  return <div className='historychat' style={{textAlign:c.id == socket.id ? 'right': 'left'}}>{c.msg}</div>
+                })
+              }
+            </div>
+            <input ref={this.messageBox} placeholder='message' onChange={e => this.message = e.target.value} onKeyDown={e => this.sendMessage(e)}/>
+            <div className='send'>enter&#8629;</div>
+          </div>
+          :''
+        }
       </div>
     )
   }
 }
-
-
-
-
-//confetti
-var confetti = {
-	maxCount: 150,		//set max confetti count
-	speed: 2,			//set the particle animation speed
-	frameInterval: 15,	//the confetti animation frame interval in milliseconds
-	alpha: 1.0,			//the alpha opacity of the confetti (between 0 and 1, where 1 is opaque and 0 is invisible)
-	gradient: false,	//whether to use gradients for the confetti particles
-	start: null,		//call to start confetti animation (with optional timeout in milliseconds, and optional min and max random confetti count)
-	stop: null,			//call to stop adding confetti
-	toggle: null,		//call to start or stop the confetti animation depending on whether it's already running
-	remove: null,		//call to stop the confetti animation and remove all confetti immediately
-};
-
-(function() {
-	confetti.start = startConfetti;
-	confetti.stop = stopConfetti;
-	confetti.toggle = toggleConfetti;
-	confetti.remove = removeConfetti;
-	var supportsAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame;
-	var colors = ["rgba(30,144,255,", "rgba(107,142,35,", "rgba(255,215,0,", "rgba(255,192,203,", "rgba(106,90,205,", "rgba(173,216,230,", "rgba(238,130,238,", "rgba(152,251,152,", "rgba(70,130,180,", "rgba(244,164,96,", "rgba(210,105,30,", "rgba(220,20,60,"];
-	var streamingConfetti = false;
-	var animationTimer = null;
-	var lastFrameTime = Date.now();
-	var particles = [];
-	var waveAngle = 0;
-	var context = null;
-
-	function resetParticle(particle, width, height) {
-		particle.color = colors[(Math.random() * colors.length) | 0] + (confetti.alpha + ")");
-		particle.color2 = colors[(Math.random() * colors.length) | 0] + (confetti.alpha + ")");
-		particle.x = Math.random() * width;
-		particle.y = Math.random() * height - height;
-		particle.diameter = Math.random() * 10 + 5;
-		particle.tilt = Math.random() * 10 - 10;
-		particle.tiltAngleIncrement = Math.random() * 0.07 + 0.05;
-		particle.tiltAngle = Math.random() * Math.PI;
-		return particle;
-	}
-
-	function runAnimation() {
-		if (particles.length === 0) {
-			context.clearRect(0, 0, window.innerWidth, window.innerHeight);
-			animationTimer = null;
-		} else {
-			var now = Date.now();
-			var delta = now - lastFrameTime;
-			if (!supportsAnimationFrame || delta > confetti.frameInterval) {
-				context.clearRect(0, 0, window.innerWidth, window.innerHeight);
-				updateParticles();
-				drawParticles(context);
-				lastFrameTime = now - (delta % confetti.frameInterval);
-			}
-			animationTimer = requestAnimationFrame(runAnimation);
-		}
-	}
-
-	function startConfetti(timeout, min, max) {
-		var width = window.innerWidth;
-		var height = window.innerHeight;
-		window.requestAnimationFrame = (function() {
-			return window.requestAnimationFrame ||
-				window.webkitRequestAnimationFrame ||
-				window.mozRequestAnimationFrame ||
-				window.oRequestAnimationFrame ||
-				window.msRequestAnimationFrame ||
-				function (callback) {
-					return window.setTimeout(callback, confetti.frameInterval);
-				};
-		})();
-		var canvas = document.getElementById("confetti-canvas");
-		if (canvas === null) {
-			canvas = document.createElement("canvas");
-			canvas.setAttribute("id", "confetti-canvas");
-			canvas.setAttribute("style", "display:block;z-index:999999;pointer-events:none;position:fixed;top:0");
-			document.body.prepend(canvas);
-			canvas.width = width;
-			canvas.height = height;
-			window.addEventListener("resize", function() {
-				canvas.width = window.innerWidth;
-				canvas.height = window.innerHeight;
-			}, true);
-			context = canvas.getContext("2d");
-		} else if (context === null)
-			context = canvas.getContext("2d");
-		var count = confetti.maxCount;
-		if (min) {
-			if (max) {
-				if (min == max)
-					count = particles.length + max;
-				else {
-					if (min > max) {
-						var temp = min;
-						min = max;
-						max = temp;
-					}
-					count = particles.length + ((Math.random() * (max - min) + min) | 0);
-				}
-			} else
-				count = particles.length + min;
-		} else if (max)
-			count = particles.length + max;
-		while (particles.length < count)
-			particles.push(resetParticle({}, width, height));
-		streamingConfetti = true;
-		runAnimation();
-		if (timeout) {
-			window.setTimeout(stopConfetti, timeout);
-		}
-	}
-
-	function stopConfetti() {
-		streamingConfetti = false;
-	}
-
-	function removeConfetti() {
-		streamingConfetti = false;
-		particles = [];
-	}
-
-	function toggleConfetti() {
-		if (streamingConfetti)
-			stopConfetti();
-		else
-			startConfetti();
-	}
-
-	function isConfettiRunning() {
-		return streamingConfetti;
-	}
-
-	function drawParticles(context) {
-		var particle;
-		var x, y, x2, y2;
-		for (var i = 0; i < particles.length; i++) {
-			particle = particles[i];
-			context.beginPath();
-			context.lineWidth = particle.diameter;
-			x2 = particle.x + particle.tilt;
-			x = x2 + particle.diameter / 2;
-			y2 = particle.y + particle.tilt + particle.diameter / 2;
-			if (confetti.gradient) {
-				var gradient = context.createLinearGradient(x, particle.y, x2, y2);
-				gradient.addColorStop("0", particle.color);
-				gradient.addColorStop("1.0", particle.color2);
-				context.strokeStyle = gradient;
-			} else
-				context.strokeStyle = particle.color;
-			context.moveTo(x, particle.y);
-			context.lineTo(x2, y2);
-			context.stroke();
-		}
-	}
-
-	function updateParticles() {
-		var width = window.innerWidth;
-		var height = window.innerHeight;
-		var particle;
-		waveAngle += 0.01;
-		for (var i = 0; i < particles.length; i++) {
-			particle = particles[i];
-			if (!streamingConfetti && particle.y < -15)
-				particle.y = height + 100;
-			else {
-				particle.tiltAngle += particle.tiltAngleIncrement;
-				particle.x += Math.sin(waveAngle) - 0.5;
-				particle.y += (Math.cos(waveAngle) + particle.diameter + confetti.speed) * 0.5;
-				particle.tilt = Math.sin(particle.tiltAngle) * 15;
-			}
-			if (particle.x > width + 20 || particle.x < -20 || particle.y > height) {
-				if (streamingConfetti && particles.length <= confetti.maxCount)
-					resetParticle(particle, width, height);
-				else {
-					particles.splice(i, 1);
-					i--;
-				}
-			}
-		}
-	}
-})();
-
 
 
 

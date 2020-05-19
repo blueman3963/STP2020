@@ -1,8 +1,9 @@
 import * as THREE from 'three'
 import { PointerLockControls } from '../utils/pointer.js'
 import { GLTFLoader } from '../utils/GLTFLoader.js'
+import { socket } from '../utils/socket.js'
 
-//import { socket } from '../utils/socket.js'
+import * as assets from '../assets/assets.json'
 
 
 //setup scene
@@ -80,32 +81,30 @@ import { GLTFLoader } from '../utils/GLTFLoader.js'
         side: THREE.DoubleSide,
       });
     for(let i = 0; i < 4; i++) {
-    var geometry = new THREE.PlaneBufferGeometry( 200, 200 );
-    let wall = new THREE.Mesh( geometry, baseMaterial );
-    wall.position.y = 90
-    wall.receiveShadow = true;
-    switch(i) {
-      case 0:
-        wall.rotation.y = Math.PI/2
-        wall.position.x = 80
-        break;
-      case 1:
-        wall.rotation.y = Math.PI/2
-        wall.position.x = -80
-        break;
-      case 2:
-        wall.position.z = 80
-        break;
-      case 3:
-        wall.position.z = -80
-        break;
-      default:
-        break;
+      var geometry = new THREE.PlaneBufferGeometry( 200, 200 );
+      let wall = new THREE.Mesh( geometry, baseMaterial );
+      wall.position.y = 90
+      wall.receiveShadow = true;
+      switch(i) {
+        case 0:
+          wall.rotation.y = Math.PI/2
+          wall.position.x = 80
+          break;
+        case 1:
+          wall.rotation.y = Math.PI/2
+          wall.position.x = -80
+          break;
+        case 2:
+          wall.position.z = 80
+          break;
+        case 3:
+          wall.position.z = -80
+          break;
+        default:
+          break;
+      }
+      scene.add( wall );
     }
-    scene.add( wall );
-    }
-
-
 
 
 //board
@@ -207,12 +206,24 @@ import { GLTFLoader } from '../utils/GLTFLoader.js'
     }
 
 
-//load artworks
-    var texloader = new THREE.TextureLoader();
+//preload artworks
+
+    let date = Date.now()/1000
+    let roundTimeAll = 200
+    let countRound = 40
+    let roundTimeEach = roundTimeAll*countRound/assets.default.length
+    let round = date%roundTimeAll
+    let artstart = Math.floor(round*assets.default.length/roundTimeAll)
+    let initpos = (assets.default.length*round/roundTimeAll - artstart)*(2*Math.PI-.8)/roundTimeEach
+    var artloader = new THREE.TextureLoader();
     var arts = []
-    for(let i=0; i<40; i++) {
-      let img = require('../assets/tex/test.png')
-      var texture = texloader.load( 'https://cdn.shopify.com/s/files/1/0279/4287/9332/files/640x360-2.png', function ( tex ) {
+    let assetsList = assets.default
+    for(let i=0; i<countRound; i++) {
+      let c = i+artstart
+      if( c >= assets.default.length ) {
+        c = c - assets.default.length
+      }
+      var texture = artloader.load( assetsList[c].link, function ( tex ) {
 
         let workMat = new THREE.MeshBasicMaterial({
               color: 0xffffff,
@@ -227,11 +238,9 @@ import { GLTFLoader } from '../utils/GLTFLoader.js'
         artwork.position.z = -70
         scene.add( art );
         arts.push(art);
-        art.pos = i
         art.position.y = -5
-        art.rotation.y = i*.14 + .45
+        art.rotation.y = i*(2*Math.PI-.8)/40 + .4 + initpos
       });
-
     }
 
 
@@ -239,4 +248,4 @@ import { GLTFLoader } from '../utils/GLTFLoader.js'
 
 
 
-export { scene, camera, renderer, controls, loader, textures, arts, logo }
+export { scene, camera, renderer, controls, loader, textures, arts, logo, roundTimeEach, artstart, artloader }
