@@ -157,6 +157,7 @@ class Three extends React.Component {
     socket.on('kill', id => {
       if(this.users[id]) {
         scene.remove(this.users[id]);
+        clearTimeout(this.users[id].clear)
         this.users[id].traverse( o => {
           if (o.geometry) {
             o.geometry.dispose()
