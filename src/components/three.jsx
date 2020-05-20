@@ -19,7 +19,8 @@ class Three extends React.Component {
     this.state = {
       lock: false,
       messaging: false,
-      chat: []
+      chat: [],
+      count: 0
     }
 
     this.wrapper = React.createRef()
@@ -349,7 +350,7 @@ class Three extends React.Component {
 
       //slideshow
       let time = this.clock.getElapsedTime()
-      artgroup.rotation.y = Math.PI*2*time%240/240
+      artgroup.rotation.y = Math.PI*2*((time%240)/240)
 
       Object.keys(this.users).forEach(key => {
         let user = this.users[key]
@@ -368,6 +369,9 @@ class Three extends React.Component {
 
   //render other users
   renderWorld(users) {
+    if(Object.keys(users).length !== this.state.count) {
+      this.setState({count: Object.keys(users).length})
+    }
     Object.keys(users).forEach(id => {
       if(socket.id !== id) {
         if(users[id].data.pos && this.users[id]){
@@ -556,12 +560,9 @@ class Three extends React.Component {
 
         <style>{`
             .helper {
-              position: fixed;
-              right: 20px;
-              top: 20px;
               font-size: 14px;
               z-index: 9999;
-              text-align: center;
+              text-align: right;
             }
 
             .menu {
@@ -648,7 +649,12 @@ class Three extends React.Component {
             }
         `}</style>
         <div className='helper' ref={this.helper}>
-          you are <strong>{this.props.first+' '+this.props.last}</strong>
+          <div style={{position: 'fixed', top:'20px', right: '20px'}}>
+            you are <strong>{this.props.first+' '+this.props.last}</strong>
+          </div>
+          <div style={{position: 'fixed', bottom:'20px', right: '20px'}}>
+            you are here with <strong>{this.state.count-1}</strong> others
+          </div>
         </div>
         <div className='menu' ref={this.menu}>
           <img src={tips} />
