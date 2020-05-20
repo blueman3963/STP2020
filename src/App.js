@@ -50,7 +50,7 @@ class App extends React.Component {
             }
 
             body {
-              font-family: 'Menlo Regular';
+              font-family: 'Menlo Regular' monospace;
               background-color: #ffdd15;
             }
 
@@ -124,6 +124,25 @@ class App extends React.Component {
               letter-spacing: 0;
               transform: translateX(-50%);
             }
+
+            .notice {
+              font-family: 'Menlo Regular' monospace !important;
+              position: fixed;
+              width: 100vw;
+              height: ${window.innerHeight}px;
+              background-color: #ffdd15;
+              color: #ED1D23;
+              display: none;
+              align-items: center;
+              justify-content: center;
+              z-index: 99999999;
+            }
+
+            @media only screen and ( max-width: 900px ) {
+              .notice {
+                display: flex;
+              }
+            }
         `}</style>
         {
           this.state.init
@@ -150,6 +169,7 @@ class App extends React.Component {
           </div>
         }
 
+        <div className='notice'>This Gallery only opens on desktop browser.</div>
       </div>
     );
   }

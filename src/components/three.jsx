@@ -99,7 +99,6 @@ class Three extends React.Component {
     socket.on('newuser', data => this.newUser(data))
     socket.on('chathistory', data => this.setState({chat:data}))
 
-
     loader.load( testmodel, gltf => {
 
           var model = gltf.scene;
@@ -302,8 +301,8 @@ class Three extends React.Component {
 			camera.direction.normalize();
 
       if(this.menu.current.style.display === 'none' && !this.state.messaging){
-  			controls.moveRight( camera.direction.x * .1 );
-  			controls.moveForward( camera.direction.z * .1 );
+  			controls.moveRight( camera.direction.x * .2 );
+  			controls.moveForward( camera.direction.z * .2 );
       }
 
       camera.position.x = Math.max(Math.min(camera.position.x, 79),-79)
