@@ -1,7 +1,7 @@
 import React from 'react'
 
 import * as THREE from 'three'
-import { scene, camera, controls, renderer, loader, textures, arts, logo, roundTimeEach, artstart, artloader, countRound, name, name1, name2, name3 } from './three_init.js'
+import { scene, camera, controls, renderer, loader, textures, artgroup, logo, name, name1, name2, name3, name4 } from './three_init.js'
 import { socket } from '../utils/socket.js'
 //import QRCode from 'qrcode.react'
 
@@ -317,15 +317,19 @@ class Three extends React.Component {
       name.rotation.y = Math.atan2( camera.position.x, camera.position.z );
       name1.position.y += .01
       if(name1.position.y > 186) {
-        name1.position.y = -93
+        name1.position.y = -186
       }
       name2.position.y += .01
       if(name2.position.y > 186) {
-        name2.position.y = -93
+        name2.position.y = -186
       }
       name3.position.y += .01
       if(name3.position.y > 186) {
-        name3.position.y = -93
+        name3.position.y = -186
+      }
+      name4.position.y += .01
+      if(name4.position.y > 186) {
+        name4.position.y = -186
       }
 
       if( this.me ) {
@@ -345,22 +349,8 @@ class Three extends React.Component {
       var Delta = this.clock.getDelta();
 
       //slideshow
-      arts.forEach(art => {
-        art.rotation.y += Delta*(Math.PI*2)/roundTimeEach
-        if(art.rotation.y > Math.PI*2) {
-          art.rotation.y = 0
-          this.artcount ++
-          if(this.artcount+countRound+artstart > assets.default.length-1) {
-            this.artcount = - countRound - artstart
-          }
-          let img = require('../assets/artworks/' + assets.default[this.artcount+countRound+artstart])
-          let texture = artloader.load( img , tex => {
-            art.children[0].material.map = tex
-            art.children[0].scale.set( 10, 10 * tex.image.height/tex.image.width, 1 );
-          })
-
-        }
-      })
+      let time = this.clock.getElapsedTime()
+      artgroup.rotation.y = Math.PI*2*time%240/240
 
       Object.keys(this.users).forEach(key => {
         let user = this.users[key]

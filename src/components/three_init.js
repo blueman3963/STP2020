@@ -113,22 +113,29 @@ import * as assets from '../assets/assets.json'
     let nameImg1 = require('../assets/tex/list1.png')
     let nameImg2 = require('../assets/tex/list2.png')
     let nameImg3 = require('../assets/tex/list3.png')
+    let nameImg4 = require('../assets/tex/list4.png')
     let nameTex1 = floorLoader.load( nameImg1, function ( tex ) {})
     let material1 = new THREE.MeshBasicMaterial( {map: nameTex1, transparent: true} );
     let nameTex2 = floorLoader.load( nameImg2, function ( tex ) {})
     let material2 = new THREE.MeshBasicMaterial( {map: nameTex2, transparent: true} );
     let nameTex3 = floorLoader.load( nameImg3, function ( tex ) {})
     let material3 = new THREE.MeshBasicMaterial( {map: nameTex3, transparent: true} );
+    let nameTex4 = floorLoader.load( nameImg4, function ( tex ) {})
+    let material4 = new THREE.MeshBasicMaterial( {map: nameTex4, transparent: true} );
     var geometry = new THREE.PlaneGeometry( 6, 93 );
     var name1 = new THREE.Mesh( geometry, material1 );
     name1.position.y = 93
     var name2 = new THREE.Mesh( geometry, material2 );
+    name2.position.y = 0
     var name3 = new THREE.Mesh( geometry, material3 );
     name3.position.y = -93
+    var name4 = new THREE.Mesh( geometry, material3 );
+    name4.position.y = -186
     let name = new THREE.Group()
     name.add(name1)
     name.add(name2)
     name.add(name3)
+    name.add(name4)
 
     scene.add( name );
     name.position.y = 0
@@ -218,47 +225,71 @@ import * as assets from '../assets/assets.json'
 
 
 //preload artworks
+    let artgroup = new THREE.Group();
+    scene.add( artgroup );
+    let arts = []
 
-    let date = Date.now()/1000
-    let roundTimeAll = 10000
-    let countRound = 40
-    let roundTimeEach = roundTimeAll*countRound/assets.default.length
-    let round = date%roundTimeAll
-    let artstart = Math.floor(round*assets.default.length/roundTimeAll)
-    let initpos = (assets.default.length*round/roundTimeAll - artstart)*(2*Math.PI)/roundTimeEach
-    var artloader = new THREE.TextureLoader();
-    var arts = []
-    let assetsList = assets.default
-    for(let i=0; i<countRound; i++) {
-      let c = i+artstart
-      if( c >= assets.default.length ) {
-        c = c - assets.default.length
-      }
-      let img = require('../assets/artworks/' + assetsList[c])
-      var texture = artloader.load( img , function ( tex ) {
+    socket.on('artstart', start => {
 
-        let workMat = new THREE.MeshBasicMaterial({
-              color: 0xffffff,
-              map: tex,
-              side: THREE.DoubleSide
-            })
+      let rotateCount = 40
+
+      var artloader = new THREE.TextureLoader();
+      let assetsList = assets.default
+
+      let replace = 0
 
 
-        let artwork = new THREE.Mesh( new THREE.PlaneBufferGeometry( 1, 1 ), workMat );
-        artwork.scale.set( 10, 10 * tex.image.height/tex.image.width, 1 );
+      for(let i=0; i<40; i++) {
+
+
         let art = new THREE.Group();
-        art.add(artwork)
-        artwork.position.z = -65 + Math.random()*10
-        artwork.position.y = Math.random()*10
-        scene.add( art );
-        arts.push(art);
-        art.rotation.y = i*(2*Math.PI)/countRound + initpos
-      });
-    }
+        art.rotation.y = i*Math.PI*2/rotateCount
+        arts.push(art)
+
+        let c = i+start
+        if( c >= assets.default.length ) {
+          c -= assets.default.length
+        }
+
+        let img = require('../assets/artworks/art' + c + '.jpg')
+        var texture = artloader.load( img , tex => {
+
+          let workMat = new THREE.MeshBasicMaterial({
+                map: tex
+              })
+
+          let artwork = new THREE.Mesh( new THREE.PlaneBufferGeometry( 1, 1 ), workMat );
+          artwork.scale.set( 10, 10 * tex.image.height/tex.image.width, 1 );
+          artwork.position.z = -65 + Math.random()*10
+          artwork.position.y = Math.random()*10
+
+          art.add(artwork)
+          artgroup.add(art)
+        });
+      }
+
+
+
+      setInterval(() => {
+        let newArt = start + 40 + replace
+        if( newArt >= assets.default.length ) {
+          newArt -= assets.default.length
+        }
+        let img = require('../assets/artworks/art'+newArt+'.jpg')
+        let texture = artloader.load( img , tex => {
+          arts[replace%rotateCount].children[0].material.map = tex
+          arts[replace%rotateCount].children[0].scale.set( 10, 10 * tex.image.height/tex.image.width, 1 );
+        })
+        console.log(replace%rotateCount)
+        replace++
+
+      },1000)
+
+    })
 
 
 
 
 
 
-export { scene, camera, renderer, controls, loader, textures, arts, logo, roundTimeEach, artstart, artloader, countRound, name, name1,name2,name3 }
+export { scene, camera, renderer, controls, loader, textures, artgroup, logo, name, name1, name2, name3, name4 }
