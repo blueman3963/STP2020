@@ -10,7 +10,7 @@ import * as assets from '../assets/assets.json'
     var scene = new THREE.Scene();
     var fogColor = new THREE.Color(0xffdd15);
     scene.background = fogColor;
-    scene.fog = new THREE.Fog(fogColor, 0.0025, 300);
+    scene.fog = new THREE.Fog(fogColor, 0.0025, 250);
 
 
 //setup camera
@@ -28,11 +28,26 @@ import * as assets from '../assets/assets.json'
 
 
 //setup light
-    var pointLight = new THREE.PointLight( 0xdddd99, 1, 200 );
-    pointLight.position.set( 0, 50, 0 );
-    pointLight.shadow.bias = - 0.005; // reduces self-shadowing on double-sided objects
-    pointLight.castShadow = true;
-    scene.add( pointLight );
+    var pointLight1 = new THREE.PointLight( 0xdddd99, .5, 200 );
+    pointLight1.position.set( 50, 50, 50 );
+    pointLight1.shadow.bias = - 0.005; // reduces self-shadowing on double-sided objects
+    pointLight1.castShadow = true;
+    scene.add( pointLight1 );
+    var pointLight2 = new THREE.PointLight( 0xdddd99, .5, 200 );
+    pointLight2.position.set( 50, 50, -50 );
+    pointLight2.shadow.bias = - 0.005; // reduces self-shadowing on double-sided objects
+    pointLight2.castShadow = true;
+    scene.add( pointLight2 );
+    var pointLight3 = new THREE.PointLight( 0xdddd99, .5, 200 );
+    pointLight3.position.set( -50, 50, 50 );
+    pointLight3.shadow.bias = - 0.005; // reduces self-shadowing on double-sided objects
+    pointLight3.castShadow = true;
+    scene.add( pointLight3 );
+    var pointLight4 = new THREE.PointLight( 0xdddd99, .5, 200 );
+    pointLight4.position.set( -50, 50, -50 );
+    pointLight4.shadow.bias = - 0.005; // reduces self-shadowing on double-sided objects
+    pointLight4.castShadow = true;
+    scene.add( pointLight4 );
 
     var ambientLight = new THREE.AmbientLight( 0x404040, .1 ); // soft white light
     scene.add( ambientLight );
@@ -40,17 +55,6 @@ import * as assets from '../assets/assets.json'
     var hemiLight = new THREE.HemisphereLight( 0xddddff, 0x444422, 0.6 );
     hemiLight.position.set( 0, 10, 0 );
     scene.add( hemiLight );
-
-    var spotLight = new THREE.SpotLight( 0xdddddd, .5 );
-    spotLight.position.set( 0, 50, 0 );
-    spotLight.castShadow = true;
-    spotLight.shadow.mapSize.width = 1024;
-    spotLight.shadow.mapSize.height = 1024;
-    spotLight.angle = Math.PI/12
-    spotLight.target.position.set(0, 0, -50);
-
-    scene.add( spotLight );
-    scene.add( spotLight.target );
 
 
 //ground
@@ -75,7 +79,7 @@ import * as assets from '../assets/assets.json'
 
 //walls
     var baseMaterial = new THREE.MeshPhongMaterial({
-        color: 0xa0adaf,
+        color: 0xffdd15,
         shininess: 10,
         specular: 0x111111,
         side: THREE.DoubleSide,
@@ -106,6 +110,29 @@ import * as assets from '../assets/assets.json'
       scene.add( wall );
     }
 
+    let nameImg1 = require('../assets/tex/list1.png')
+    let nameImg2 = require('../assets/tex/list2.png')
+    let nameImg3 = require('../assets/tex/list3.png')
+    let nameTex1 = floorLoader.load( nameImg1, function ( tex ) {})
+    let material1 = new THREE.MeshBasicMaterial( {map: nameTex1, transparent: true} );
+    let nameTex2 = floorLoader.load( nameImg2, function ( tex ) {})
+    let material2 = new THREE.MeshBasicMaterial( {map: nameTex2, transparent: true} );
+    let nameTex3 = floorLoader.load( nameImg3, function ( tex ) {})
+    let material3 = new THREE.MeshBasicMaterial( {map: nameTex3, transparent: true} );
+    var geometry = new THREE.PlaneGeometry( 6, 93 );
+    var name1 = new THREE.Mesh( geometry, material1 );
+    name1.position.y = 93
+    var name2 = new THREE.Mesh( geometry, material2 );
+    var name3 = new THREE.Mesh( geometry, material3 );
+    name3.position.y = -93
+    let name = new THREE.Group()
+    name.add(name1)
+    name.add(name2)
+    name.add(name3)
+
+    scene.add( name );
+    name.position.y = 0
+
 
 //board
 
@@ -120,22 +147,6 @@ import * as assets from '../assets/assets.json'
     logo.rotation.x = Math.PI/2
     logo.position.y = 180
     scene.add( logo );
-
-    var boardG = new THREE.PlaneBufferGeometry( 17, 2 );
-    let boardimg = require('../assets/tex/title.png')
-    let boardTe = floorLoader.load( boardimg, function ( tex ) {})
-    var boardMa = new THREE.MeshPhongMaterial({
-          color: 0xa0adaf,
-          shininess: 10,
-          specular: 0x111111,
-          side: THREE.DoubleSide,
-          map:boardTe,
-          transparent: true,
-        });
-    let board = new THREE.Mesh( boardG, boardMa );
-    board.position.z = -75
-    board.position.y = -5
-    scene.add( board );
 
 
 //setup controls
@@ -209,12 +220,12 @@ import * as assets from '../assets/assets.json'
 //preload artworks
 
     let date = Date.now()/1000
-    let roundTimeAll = 200
+    let roundTimeAll = 10000
     let countRound = 40
     let roundTimeEach = roundTimeAll*countRound/assets.default.length
     let round = date%roundTimeAll
     let artstart = Math.floor(round*assets.default.length/roundTimeAll)
-    let initpos = (assets.default.length*round/roundTimeAll - artstart)*(2*Math.PI-.8)/roundTimeEach
+    let initpos = (assets.default.length*round/roundTimeAll - artstart)*(2*Math.PI)/roundTimeEach
     var artloader = new THREE.TextureLoader();
     var arts = []
     let assetsList = assets.default
@@ -223,7 +234,8 @@ import * as assets from '../assets/assets.json'
       if( c >= assets.default.length ) {
         c = c - assets.default.length
       }
-      var texture = artloader.load( assetsList[c].link, function ( tex ) {
+      let img = require('../assets/artworks/' + assetsList[c])
+      var texture = artloader.load( img , function ( tex ) {
 
         let workMat = new THREE.MeshBasicMaterial({
               color: 0xffffff,
@@ -232,14 +244,15 @@ import * as assets from '../assets/assets.json'
             })
 
 
-        let artwork = new THREE.Mesh( new THREE.PlaneBufferGeometry( tex.image.width/100, tex.image.height/100 ), workMat );
+        let artwork = new THREE.Mesh( new THREE.PlaneBufferGeometry( 1, 1 ), workMat );
+        artwork.scale.set( 10, 10 * tex.image.height/tex.image.width, 1 );
         let art = new THREE.Group();
         art.add(artwork)
-        artwork.position.z = -70
+        artwork.position.z = -65 + Math.random()*10
+        artwork.position.y = Math.random()*10
         scene.add( art );
         arts.push(art);
-        art.position.y = -5
-        art.rotation.y = i*(2*Math.PI-.8)/40 + .4 + initpos
+        art.rotation.y = i*(2*Math.PI)/countRound + initpos
       });
     }
 
@@ -248,4 +261,4 @@ import * as assets from '../assets/assets.json'
 
 
 
-export { scene, camera, renderer, controls, loader, textures, arts, logo, roundTimeEach, artstart, artloader }
+export { scene, camera, renderer, controls, loader, textures, arts, logo, roundTimeEach, artstart, artloader, countRound, name, name1,name2,name3 }

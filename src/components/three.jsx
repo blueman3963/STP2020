@@ -1,12 +1,13 @@
 import React from 'react'
 
 import * as THREE from 'three'
-import { scene, camera, controls, renderer, loader, textures, arts, logo, roundTimeEach, artstart, artloader } from './three_init.js'
+import { scene, camera, controls, renderer, loader, textures, arts, logo, roundTimeEach, artstart, artloader, countRound, name, name1, name2, name3 } from './three_init.js'
 import { socket } from '../utils/socket.js'
 //import QRCode from 'qrcode.react'
 
 import * as testmodel from '../assets/test.glb'
 import * as tips from '../assets/tips.png'
+import * as title from '../assets/title.png'
 import * as clap from '../assets/clap.wav'
 
 import * as assets from '../assets/assets.json'
@@ -311,6 +312,22 @@ class Three extends React.Component {
 
       logo.rotation.z += .001
 
+
+      //name
+      name.rotation.y = Math.atan2( camera.position.x, camera.position.z );
+      name1.position.y += .01
+      if(name1.position.y > 186) {
+        name1.position.y = -93
+      }
+      name2.position.y += .01
+      if(name2.position.y > 186) {
+        name2.position.y = -93
+      }
+      name3.position.y += .01
+      if(name3.position.y > 186) {
+        name3.position.y = -93
+      }
+
       if( this.me ) {
         this.me.position.x = camera.position.x
         this.me.position.z = camera.position.z
@@ -329,34 +346,18 @@ class Three extends React.Component {
 
       //slideshow
       arts.forEach(art => {
-        art.rotation.y += Delta*(Math.PI*2-.8)/roundTimeEach
-        if(art.rotation.y > (Math.PI*2-.4)) {
-          scene.remove( art );
-          arts.pop()
+        art.rotation.y += Delta*(Math.PI*2)/roundTimeEach
+        if(art.rotation.y > Math.PI*2) {
+          art.rotation.y = 0
           this.artcount ++
-          if(this.artcount+40+artstart > assets.default.length-1) {
-            this.artcount = - 40 - artstart
+          if(this.artcount+countRound+artstart > assets.default.length-1) {
+            this.artcount = - countRound - artstart
           }
-          //new art
-          let texture = artloader.load( assets.default[this.artcount+40+artstart].link, ( tex ) => {
-
-            let workMat = new THREE.MeshBasicMaterial({
-                  color: 0xffffff,
-                  map: tex,
-                  side: THREE.DoubleSide
-                })
-
-
-            let artwork = new THREE.Mesh( new THREE.PlaneBufferGeometry( tex.image.width/100, tex.image.height/100 ), workMat );
-            let newart = new THREE.Group();
-            newart.add(artwork)
-            artwork.position.z = -70
-            scene.add( newart );
-            arts.unshift(newart);
-            newart.position.y = -5
-            newart.rotation.y = .4
-          });
-
+          let img = require('../assets/artworks/' + assets.default[this.artcount+countRound+artstart])
+          let texture = artloader.load( img , tex => {
+            art.children[0].material.map = tex
+            art.children[0].scale.set( 10, 10 * tex.image.height/tex.image.width, 1 );
+          })
 
         }
       })
@@ -368,6 +369,7 @@ class Three extends React.Component {
       this.me.mixer.update( Delta );
 
       renderer.render( scene, camera );
+
     };
     animate();
 
@@ -508,7 +510,6 @@ class Three extends React.Component {
 
 
           model.traverse( object => {
-
             if ( object.isMesh ) {
               object.castShadow = true
             }
@@ -569,7 +570,7 @@ class Three extends React.Component {
               position: fixed;
               right: 20px;
               top: 20px;
-              font-size: 24px;
+              font-size: 14px;
               z-index: 9999;
               text-align: center;
             }
@@ -597,7 +598,7 @@ class Three extends React.Component {
               position: fixed;
               top: 20px;
               left: 20px;
-              font-size: 24px;
+              font-size: 14px;
               z-index: 9999;
               display: none;
             }
@@ -661,7 +662,7 @@ class Three extends React.Component {
             }
         `}</style>
         <div className='helper' ref={this.helper}>
-          your are <strong>{this.props.first+' '+this.props.last}</strong>
+          you are <strong>{this.props.first+' '+this.props.last}</strong>
         </div>
         <div className='menu' ref={this.menu}>
           <img src={tips} />
@@ -669,6 +670,7 @@ class Three extends React.Component {
         <div className='quit' ref={this.quit}>
           press <span>esc</span> to unlock your cursor
         </div>
+        <img src={title} style={{width: '200px',  position: 'fixed', left: '50vw', transform:'translateX(-50%)', top: '20px'}}/>
         {
           this.state.messaging
           ?<div className='message'>
