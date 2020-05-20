@@ -534,7 +534,7 @@ class Three extends React.Component {
 
   sendMessage(e) {
     if(e.keyCode == 13 && this.message !== '') {
-      socket.emit('message', this.message)
+      socket.emit('message', {name:this.props.first,data:this.message})
       this.setState({messaging:false})
     }
   }
@@ -585,9 +585,6 @@ class Three extends React.Component {
             }
 
             .quit {
-              position: fixed;
-              top: 20px;
-              left: 20px;
               font-size: 14px;
               z-index: 9999;
               display: none;
@@ -647,7 +644,7 @@ class Three extends React.Component {
               color: #fff;
               font-size: 20px;
               border-radius: 30px;
-              padding: 10px;
+              padding: 10px 20px;
               margin-bottom: 20px;
             }
         `}</style>
@@ -658,7 +655,12 @@ class Three extends React.Component {
           <img src={tips} />
         </div>
         <div className='quit' ref={this.quit}>
+          <div style={{position: 'fixed', left: '20px', top: '20px'}}>
           press <span>esc</span> to unlock your cursor
+          </div>
+          <div style={{position: 'fixed', left: '20px', bottom: '20px'}}>
+          press <span>tab</span> to chat
+          </div>
         </div>
         <img src={title} style={{width: '200px',  position: 'fixed', left: '50vw', transform:'translateX(-50%)', top: '20px'}}/>
         {
@@ -667,7 +669,7 @@ class Three extends React.Component {
             <div className='history'>
               {
                 this.state.chat.map(c => {
-                  return <div className='historychat' style={{textAlign:c.id == socket.id ? 'right': 'left'}}>{c.msg}</div>
+                  return <div className='historychat' style={{textAlign:c.id == socket.id ? 'right': 'left'}}><div style={{fontSize:'10px'}}>{c.name}:</div>{c.msg}</div>
                 })
               }
             </div>

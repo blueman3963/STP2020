@@ -283,7 +283,7 @@ import * as assets from '../assets/assets.json'
         console.log(replace%rotateCount)
         replace++
 
-      },1000)
+      },3000)
 
     })
 

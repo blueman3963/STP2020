@@ -46,11 +46,12 @@ class App extends React.Component {
               font-family: 'Menlo Regular';
               font-style: normal;
               font-weight: normal;
-              src: local('Menlo Regular'), url('./assets/Menlo-Regular.woff') format('woff');
+              src: local('Menlo Regular'), url('./assets/Menlo.ttc') format('woff');
             }
 
             body {
               font-family: 'Menlo Regular';
+              background-color: #ffdd15;
             }
 
             .step1 {
@@ -78,11 +79,17 @@ class App extends React.Component {
             .input {
               display: inline-block;
               margin: auto;
-              font-size: 30px;
+              font-size: 20px;
+              padding: 14px;
               text-align: center;
               border: 1px solid #000;
               margin-bottom: 20px;
               width: 200px;
+              background-color: transparent;
+            }
+            ::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+              color: #ccaa00;
+              opacity: 1; /* Firefox */
             }
 
             .input:focus {
@@ -91,27 +98,38 @@ class App extends React.Component {
 
 
             .btn {
-              padding: 0px 2px;
+              padding: 14px;
               letter-spacing: 2px;
-              font-size: 50px;
+              font-size: 20px;
               border: 1px solid #000;
               display: inline-block;
-              line-height: 50px;
               cursor: pointer;
               margin: auto;
+              width: 200px;
+              text-align: center;
             }
 
             .btn:hover {
-              background-color: #000;
+              background-color: #ED1D23;
               color: #fff;
+              border: 1px solid #ED1D23;
+            }
 
+            .line {
+              position: fixed;
+              left: 50vw;
+              top: 50vh;
+              color: #ED1D23;
+              white-space: nowrap;
+              letter-spacing: 0;
+              transform: translateX(-50%);
             }
         `}</style>
         {
           this.state.init
           ? <Three role={this.state.role} first={this.state.first} last={this.state.last}/>
           : this.state.queue
-          ? <div>The Gallery is full, you are number {this.state.queue} in the line</div>
+          ? <div className='line'>The Gallery is full, you are number {this.state.queue} in the line. Thank you for your patience.</div>
           : this.state.onboard
           ? <div className='step2'>
             <div>
@@ -121,7 +139,7 @@ class App extends React.Component {
                 <input className='input' placeholder='last name' onChange={e => this.setState({last: e.target.value})}/>
               </div>
               <div>
-                <input className='input' style={{width: '420px'}} placeholder='email' onChange={e => this.setState({email: e.target.value})}/>
+                <input className='input' style={{width: '280px'}} placeholder='email' onChange={e => this.setState({email: e.target.value})}/>
               </div>
               </div>
               <div className='btn' onClick={() => this.init()}>start</div>
