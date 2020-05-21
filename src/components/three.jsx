@@ -99,12 +99,14 @@ class Three extends React.Component {
         }
       } else if(e.keyCode == 77 && !this.state.messaging) {
         let music = document.querySelector('.bgm')
-        if(this.vol == .2) {
-          this.vol = 0
-          music.volume = this.vol
-        } else {
-          this.vol = .2
-          music.volume = this.vol
+        if(music) {
+          if(this.vol == .2) {
+            this.vol = 0
+            music.volume = this.vol
+          } else {
+            this.vol = .2
+            music.volume = this.vol
+          }
         }
       }
 

@@ -16,8 +16,8 @@ import * as assets from '../assets/assets.json'
 //setup camera
     var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
     camera.position.y = -5
-    camera.position.z = Math.random()*10-60
-    camera.position.x = Math.random()*10
+    camera.position.z = Math.random()*100-50
+    camera.position.x = Math.random()*100-50
 
 
 //setup renderer

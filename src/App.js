@@ -32,8 +32,9 @@ class App extends React.Component {
   }
 
   getIn() {
-    this.bgm.current.play()
-    this.bgm.current.volume = .2
+
+    //this.bgm.current.play()
+    //this.bgm.current.volume = .2
     this.setState({role:'0', first:'John', last:'doe', gender:'generic', email:'N/A'},() => {
       this.setState({onboard:true})
     })
@@ -183,10 +184,13 @@ class App extends React.Component {
         }
 
         <div className='notice'>This Gallery only opens on desktop browser.</div>
-
-        <audio ref={this.bgm} loop className='bgm'>
-          <source src={track1} />
-        </audio>
+        {
+          false
+          ?<audio ref={this.bgm} loop className='bgm'>
+            <source src={track1} />
+          </audio>
+          :''
+        }
       </div>
     );
   }
