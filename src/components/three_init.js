@@ -237,7 +237,7 @@ import * as assets from '../assets/assets.json'
       let assetsList = assets.default
 
       let replace = 0
-
+      let assetLength = 1298
 
       for(let i=0; i<40; i++) {
 
@@ -247,8 +247,8 @@ import * as assets from '../assets/assets.json'
         arts.push(art)
 
         let c = i+start
-        if( c >= assets.default.length ) {
-          c -= assets.default.length
+        if( c >= assetLength ) {
+          c -= assetLength
         }
 
         let img = require('../assets/artworks/art' + c + '.jpg')
@@ -261,7 +261,7 @@ import * as assets from '../assets/assets.json'
           let artwork = new THREE.Mesh( new THREE.PlaneBufferGeometry( 1, 1 ), workMat );
           artwork.scale.set( 10, 10 * tex.image.height/tex.image.width, 1 );
           artwork.position.z = -65 + Math.random()*10
-          artwork.position.y = Math.random()*10
+          artwork.position.y = Math.random()*5-8 + 5 * tex.image.height/tex.image.width
 
           art.add(artwork)
           artgroup.add(art)
@@ -272,18 +272,19 @@ import * as assets from '../assets/assets.json'
 
       setInterval(() => {
         let newArt = start + 40 + replace
-        if( newArt >= assets.default.length ) {
-          newArt -= assets.default.length
+        if( newArt >= assetLength ) {
+          newArt -= assetLength
         }
         let img = require('../assets/artworks/art'+newArt+'.jpg')
         let texture = artloader.load( img , tex => {
           arts[replace%rotateCount].children[0].material.map = tex
           arts[replace%rotateCount].children[0].scale.set( 10, 10 * tex.image.height/tex.image.width, 1 );
+          arts[replace%rotateCount].children[0].position.y = Math.random()*5-8+ 5 * tex.image.height/tex.image.width
         })
         console.log(replace%rotateCount)
         replace++
 
-      },3000)
+      },6000)
 
     })
 

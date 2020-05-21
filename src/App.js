@@ -4,6 +4,8 @@ import Three from './components/three.jsx'
 
 import { socket } from './utils/socket.js'
 
+import * as track1 from './assets/mix/01.mp3'
+
 class App extends React.Component {
   constructor(props) {
     super(props)
@@ -15,6 +17,7 @@ class App extends React.Component {
       last: 'Doe'
     }
     this.title = React.createRef()
+    this.bgm = React.createRef()
   }
 
   componentDidMount() {
@@ -25,9 +28,15 @@ class App extends React.Component {
     })
 
     socket.on('queue',order => this.setState({queue:order}))
+
+    window.addEventListener('click', () => {
+      console.log(document.querySelector('iframe'))
+    })
   }
 
   getIn() {
+    this.bgm.current.play()
+    this.bgm.current.volume = .2
     this.setState({role:'0', first:'John', last:'doe', gender:'generic', email:'N/A'},() => {
       this.setState({onboard:true})
     })
@@ -48,26 +57,25 @@ class App extends React.Component {
     return (
       <div className="App">
         <style>{`
-            @font-face {
-              font-family: 'Menlo Regular';
-              font-style: normal;
-              font-weight: normal;
-              src: local('Menlo Regular'), url('./assets/Menlo.ttc') format('woff');
-            }
 
             body {
-              font-family: 'Menlo Regular' monospace;
               background-color: #ffdd15;
             }
 
-            .step1 {
+            .step1 .wrapper {
+              font-size: 14px;
+              line-height: 1.5em;
+              width: 600px;
+              position: fixed;
+              left: 50vw;
+              top: 50vh;
+              transform: translate(-50%, -50%);
             }
 
             .step1 .btn {
-              position: fixed;
-              left: 50vw;
-              top: ${window.innerHeight/2}px;
-              transform: translate(-50%, -50%);
+              display: block;
+              margin: auto;
+              margin-top: 60px;
             }
 
             .step2 {
@@ -132,7 +140,6 @@ class App extends React.Component {
             }
 
             .notice {
-              font-family: 'Menlo Regular' monospace !important;
               position: fixed;
               width: 100vw;
               height: ${window.innerHeight}px;
@@ -171,11 +178,18 @@ class App extends React.Component {
             </div>
           </div>
           : <div className='step1'>
-            <div className='btn' onClick={() => this.getIn()}>Enter</div>
+            <div className='wrapper'>
+              <span style={{color: 'red'}}>Serving the People</span> is pleased to present the BFA Show, a digital showcase of student artwork. Open to all students enrolled in Bachelor of Fine Arts programs, BFA Show received submissions across a wide range of mediums from 837 students attending 96 universities in 13 countries. Detailed information of all works will be available after the virtual opening at stp.world. Congratulations to all the students!
+              <div className='btn' onClick={() => this.getIn()}>Enter</div>
+            </div>
           </div>
         }
 
         <div className='notice'>This Gallery only opens on desktop browser.</div>
+
+        <audio ref={this.bgm} loop>
+          <source src={track1} />
+        </audio>
       </div>
     );
   }

@@ -351,7 +351,7 @@ class Three extends React.Component {
 
       //slideshow
       let time = this.clock.getElapsedTime()
-      artgroup.rotation.y = Math.PI*2*((time%240)/240)
+      artgroup.rotation.y = -Math.PI*2*((time%240)/240)
 
       Object.keys(this.users).forEach(key => {
         let user = this.users[key]
@@ -665,7 +665,7 @@ class Three extends React.Component {
         </div>
         <div className='quit' ref={this.quit}>
           <div style={{position: 'fixed', left: '20px', top: '20px'}}>
-          press <span>esc</span> to unlock your cursor
+          press <span>esc</span> for controls
           </div>
           <div style={{position: 'fixed', right: '20px', top: '20px'}}>
           press <span>tab</span> to chat
