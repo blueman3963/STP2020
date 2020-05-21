@@ -79,6 +79,7 @@ class Three extends React.Component {
           this.me.prepare = false
         }
       } else if(e.keyCode == 67 && !this.state.messaging) {
+        socket.emit('clap')
         if(!this.me.claping){
           this.me.claping = true
 
@@ -471,18 +472,21 @@ class Three extends React.Component {
           //nametag
           var bitmap = document.createElement('canvas');
           var g = bitmap.getContext('2d');
-          bitmap.width = 1600;
+          let test = document.createElement('canvas');
+          let testc = test.getContext('2d');
+          let namewidth = testc.measureText(realname).width
+          bitmap.width = namewidth*20+200;
           bitmap.height = 400;
-          g.font = 'bold 200px Arial';
 
+          g.font = 'bold 200px Arial';
           g.fillStyle = 'white';
           g.textAlign = "center";
-          g.fillText(realname, 800, 250);
+          g.fillText(realname, namewidth*10+100, 250);
 
           // canvas contents will be used for a texture
           var texture = new THREE.Texture(bitmap)
           texture.needsUpdate = true;
-          var geometry = new THREE.PlaneGeometry( 2, .5, 2 );
+          var geometry = new THREE.PlaneGeometry( (namewidth*10+100)/400, .5, 2 );
           var material = new THREE.MeshBasicMaterial( {map : texture} );
           var name = new THREE.Mesh( geometry, material );
           name.position.y = 7
@@ -649,7 +653,7 @@ class Three extends React.Component {
             }
         `}</style>
         <div className='helper' ref={this.helper}>
-          <div style={{position: 'fixed', top:'20px', right: '20px'}}>
+          <div style={{position: 'fixed', bottom:'20px', left: '20px'}}>
             you are <strong>{this.props.first+' '+this.props.last}</strong>
           </div>
           <div style={{position: 'fixed', bottom:'20px', right: '20px'}}>
@@ -663,7 +667,7 @@ class Three extends React.Component {
           <div style={{position: 'fixed', left: '20px', top: '20px'}}>
           press <span>esc</span> to unlock your cursor
           </div>
-          <div style={{position: 'fixed', left: '20px', bottom: '20px'}}>
+          <div style={{position: 'fixed', right: '20px', top: '20px'}}>
           press <span>tab</span> to chat
           </div>
         </div>

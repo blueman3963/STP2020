@@ -218,7 +218,7 @@ import * as assets from '../assets/assets.json'
 //init Texloader
     var textures = {}
     var faceloader = new THREE.TextureLoader();
-    for(let i=0; i<1; i++) {
+    for(let i=0; i<2; i++) {
       let img = require('../assets/tex/'+i+'.png')
       textures['head'+i] = faceloader.load( img, function ( tex ) {})
     }

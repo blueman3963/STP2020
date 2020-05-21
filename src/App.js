@@ -28,13 +28,19 @@ class App extends React.Component {
   }
 
   getIn() {
-    this.setState({role:'0', first:'John', last:'doe', gender:'generic'},() => {
+    this.setState({role:'0', first:'John', last:'doe', gender:'generic', email:'N/A'},() => {
       this.setState({onboard:true})
     })
   }
 
   init() {
-    socket.emit('ready')
+    if(this.state.email === 'admin@stp') {
+      this.setState({init:true}, () => {
+        socket.emit('onboard', {role:1,first:this.state.first,last:this.state.last,email: this.state.email});
+      })
+    } else {
+      socket.emit('ready')
+    }
   }
 
   render() {
@@ -154,8 +160,8 @@ class App extends React.Component {
             <div>
               <div>
               <div>
-                <input className='input' style={{marginRight: '20px'}} placeholder='first name' onChange={e => this.setState({first: e.target.value})}/>
-                <input className='input' placeholder='last name' onChange={e => this.setState({last: e.target.value})}/>
+                <input className='input' style={{marginRight: '20px'}} maxLength="12" placeholder='first name' onChange={e => this.setState({first: e.target.value})}/>
+                <input className='input' placeholder='last name' maxLength="12" onChange={e => this.setState({last: e.target.value})}/>
               </div>
               <div>
                 <input className='input' style={{width: '280px'}} placeholder='email' onChange={e => this.setState({email: e.target.value})}/>
