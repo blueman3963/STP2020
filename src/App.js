@@ -29,9 +29,6 @@ class App extends React.Component {
 
     socket.on('queue',order => this.setState({queue:order}))
 
-    window.addEventListener('click', () => {
-      console.log(document.querySelector('iframe'))
-    })
   }
 
   getIn() {
@@ -44,7 +41,7 @@ class App extends React.Component {
 
   init() {
     if(this.state.email === 'admin@stp') {
-      this.setState({init:true}, () => {
+      this.setState({init:true, role:'1'}, () => {
         socket.emit('onboard', {role:1,first:this.state.first,last:this.state.last,email: this.state.email});
       })
     } else {
@@ -187,7 +184,7 @@ class App extends React.Component {
 
         <div className='notice'>This Gallery only opens on desktop browser.</div>
 
-        <audio ref={this.bgm} loop>
+        <audio ref={this.bgm} loop className='bgm'>
           <source src={track1} />
         </audio>
       </div>

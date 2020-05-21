@@ -20,7 +20,8 @@ class Three extends React.Component {
       lock: false,
       messaging: false,
       chat: [],
-      count: 0
+      count: 0,
+      threshold: 0
     }
 
     this.wrapper = React.createRef()
@@ -37,6 +38,10 @@ class Three extends React.Component {
     this.message = ''
 
     this.artcount = 0
+
+    this.threshold = 10
+
+    this.vol = .2
   }
 
   componentDidMount() {
@@ -92,6 +97,15 @@ class Three extends React.Component {
             this.me.claping = false
           },3000)
         }
+      } else if(e.keyCode == 77 && !this.state.messaging) {
+        let music = document.querySelector('.bgm')
+        if(this.vol == .2) {
+          this.vol = 0
+          music.volume = this.vol
+        } else {
+          this.vol = .2
+          music.volume = this.vol
+        }
       }
 
     })
@@ -100,6 +114,7 @@ class Three extends React.Component {
     socket.on('exist', data => this.existUser(data))
     socket.on('newuser', data => this.newUser(data))
     socket.on('chathistory', data => this.setState({chat:data}))
+    socket.on('threshold', data => this.setState({threshold:data}))
 
     loader.load( testmodel, gltf => {
 
@@ -559,7 +574,6 @@ class Three extends React.Component {
             height: '100vh',
             backgroundColor: '#ddd'
           }}
-          onClick={() => this.lock()}
         ></div>
 
         <style>{`
@@ -573,7 +587,6 @@ class Three extends React.Component {
               width: 100vw;
               height: 100vh;
               position: fixed;
-              pointer-events: none;
               display: flex;
               align-items: center;
               justify-content: center;
@@ -581,11 +594,18 @@ class Three extends React.Component {
               top: 0;
               background-color: rgba(0,0,0,.7);
               z-index: 999;
+              color: #fff;
             }
 
             .menu img {
               width: 90vw;
               max-width: 500px;
+            }
+
+            .admin {
+                position: fixed;
+                left: 20px;
+                top: 20px;
             }
 
             .quit {
@@ -661,14 +681,43 @@ class Three extends React.Component {
           </div>
         </div>
         <div className='menu' ref={this.menu}>
+          <div style={{width: '100vw', height: '100vh', position: 'fixed', left: '0', top:'0'}} onClick={() => this.lock()} >
+          </div>
           <img src={tips} />
+          {
+            this.props.role == '1'
+            ?<div className='admin'>
+              admin console:<br/>
+            current threshold {this.state.threshold} <br/>
+          set threshold <input type="number" id="tentacles" name="tentacles" min="1" max="100" onChange={e => this.threshold = e.target.value}/>
+            <span
+              style={{
+                border:'1px solid #fff',
+                cursor: 'pointer'
+              }}
+              onClick={() => {
+                let n = parseInt(this.threshold)
+                if(Number.isInteger(n) && n < 100 && n > 1){
+                   socket.emit('threshold',n)
+                }
+              }}
+            >
+              set
+            </span><br/>
+            </div>
+            :''
+          }
+
+
         </div>
         <div className='quit' ref={this.quit}>
-          <div style={{position: 'fixed', left: '20px', top: '20px'}}>
-          press <span>esc</span> for controls
+          <div style={{position: 'fixed', left: '20px', top: '20px', lineHeight:'3em'}}>
+          press <span>esc</span> for cursor<br/>
+          press <span>W</span> <span>A</span> <span>S</span> <span>D</span> to move
           </div>
-          <div style={{position: 'fixed', right: '20px', top: '20px'}}>
-          press <span>tab</span> to chat
+          <div style={{position: 'fixed', right: '20px', top: '20px', lineHeight:'3em', textAlign: 'right'}}>
+          press <span>tab</span> to chat<br/>
+        press <span>c</span> to clap<br/>
           </div>
         </div>
         <img src={title} style={{width: '200px',  position: 'fixed', left: '50vw', transform:'translateX(-50%)', top: '20px'}}/>
