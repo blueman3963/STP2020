@@ -38,14 +38,14 @@ class App extends React.Component {
 
   getIn() {
 
-    this.bgm.current.volume = .2
+    //this.bgm.current.volume = .2
     this.setState({role:'0', first:'John', last:'doe', gender:'generic', email:'N/A'},() => {
       this.setState({onboard:true})
     })
   }
 
   init() {
-    this.bgm.current.play()
+    //this.bgm.current.play()
 
     if(this.state.email === 'admin@stp') {
       this.setState({init:true, role:'1'}, () => {
@@ -192,9 +192,14 @@ class App extends React.Component {
         <div className='notice'>This Gallery only opens on desktop browser.</div>
         <div className='notice2' style={{position: 'fixed', left: '0', top: '0', width: '100vw', height: '100vh', display:'none', alignItems:'center', justifyContent: 'center'}} ref={this.motice2}>Sorry we have lost your connection. Please try reload this app.</div>
 
-        <audio ref={this.bgm} loop className='bgm'>
-          <source src={track1} />
-        </audio>
+        {
+          false
+          ?<audio ref={this.bgm} loop className='bgm'>
+            <source src={track1} />
+          </audio>
+          :''
+        }
+
       </div>
     );
   }
